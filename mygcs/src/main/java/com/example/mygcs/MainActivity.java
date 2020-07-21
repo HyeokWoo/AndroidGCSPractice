@@ -132,7 +132,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mainHandler = new Handler(getApplicationContext().getMainLooper());
 
         }
-
+//Operate Event=====================================================================================================================================================================================================
     @Override
     public void onStart() {
         super.onStart();
@@ -171,37 +171,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mymap.setMapType(NaverMap.MapType.Satellite);
 
     }
-
-    protected void updateDistanceFromHome() {
-        TextView distanceTextView = (TextView) findViewById(R.id.yawValueTextView);
-        Altitude droneAltitude = this.drone.getAttribute(AttributeType.ALTITUDE);
-        double vehicleAltitude = droneAltitude.getAltitude();
-        Gps droneGps = this.drone.getAttribute(AttributeType.GPS);
-        LatLong vehiclePosition = droneGps.getPosition();
-
-        double distanceFromHome = 0;
-
-        if (droneGps.isValid()) {
-            LatLongAlt vehicle3DPosition = new LatLongAlt(vehiclePosition.getLatitude(), vehiclePosition.getLongitude(), vehicleAltitude);
-            Home droneHome = this.drone.getAttribute(AttributeType.HOME);
-            distanceFromHome = distanceBetweenPoints(droneHome.getCoordinate(), vehicle3DPosition);
-        } else {
-            distanceFromHome = 0;
-        }
-
-        distanceTextView.setText(String.format("%3.1f", distanceFromHome) + "m");
-    }
-
-    protected double distanceBetweenPoints(LatLongAlt pointA, LatLongAlt pointB) {
-        if (pointA == null || pointB == null) {
-            return 0;
-        }
-        double dx = pointA.getLatitude() - pointB.getLatitude();
-        double dy = pointA.getLongitude() - pointB.getLongitude();
-        double dz = pointA.getAltitude() - pointB.getAltitude();
-        return Math.sqrt(dx * dx + dy * dy + dz * dz);
-    }
-
 
     @Override
     public void onDroneEvent(String event, Bundle extras) {
@@ -294,25 +263,39 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         }
     }
-    @Override
-    public void onLinkStateUpdated(@NonNull LinkConnectionStatus connectionStatus) {
-        switch(connectionStatus.getStatusCode()){
-            case LinkConnectionStatus.FAILED:
-                Bundle extras = connectionStatus.getExtras();
-                String msg = null;
-                if (extras != null) {
-                    msg = extras.getString(LinkConnectionStatus.EXTRA_ERROR_MSG);
-                }
-                alertUser("Connection Failed:" + msg);
-                break;
+
+//Distance=================================================================================================================================================================================================
+    protected void updateDistanceFromHome() {
+        TextView distanceTextView = (TextView) findViewById(R.id.yawValueTextView);
+        Altitude droneAltitude = this.drone.getAttribute(AttributeType.ALTITUDE);
+        double vehicleAltitude = droneAltitude.getAltitude();
+        Gps droneGps = this.drone.getAttribute(AttributeType.GPS);
+        LatLong vehiclePosition = droneGps.getPosition();
+
+        double distanceFromHome = 0;
+
+        if (droneGps.isValid()) {
+            LatLongAlt vehicle3DPosition = new LatLongAlt(vehiclePosition.getLatitude(), vehiclePosition.getLongitude(), vehicleAltitude);
+            Home droneHome = this.drone.getAttribute(AttributeType.HOME);
+            distanceFromHome = distanceBetweenPoints(droneHome.getCoordinate(), vehicle3DPosition);
+        } else {
+            distanceFromHome = 0;
         }
+
+        distanceTextView.setText(String.format("%3.1f", distanceFromHome) + "m");
     }
 
-    protected void alertUser(String message) {
-        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
-        Log.d(TAG, message);
+    protected double distanceBetweenPoints(LatLongAlt pointA, LatLongAlt pointB) {
+        if (pointA == null || pointB == null) {
+            return 0;
+        }
+        double dx = pointA.getLatitude() - pointB.getLatitude();
+        double dy = pointA.getLongitude() - pointB.getLongitude();
+        double dz = pointA.getAltitude() - pointB.getAltitude();
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
 
+//Vehicle Value==============================================================================================================================================================================================
     public void onFlightModeSelected(View view) {
         VehicleMode vehicleMode = (VehicleMode) this.modeSelector.getSelectedItem();
 
@@ -367,6 +350,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         numberOfSatellitesTextView.setText(String.format("%d", droneNumberOfSatellites.getSatellitesCount()));
     }
 
+//Button=================================================================================================================================================================================================
     protected void updateConnectedButton(Boolean isConnected) {
         Button connectButton = (Button) findViewById(R.id.btnconnect);
         if (isConnected) {
@@ -402,13 +386,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private void checkSoloState() {
-        final SoloState soloState = drone.getAttribute(SoloAttributes.SOLO_STATE);
-        if (soloState == null){
-            alertUser("Unable to retrieve the solo state.");
-        }
-        else {
-            alertUser("Solo state is up to date.");
+//Helper===================================================================================================================================================================================================
+    protected void alertUser(String message) {
+        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+        Log.d(TAG, message);
+    }
+
+    @Override
+    public void onLinkStateUpdated(@NonNull LinkConnectionStatus connectionStatus) {
+        switch(connectionStatus.getStatusCode()){
+            case LinkConnectionStatus.FAILED:
+                Bundle extras = connectionStatus.getExtras();
+                String msg = null;
+                if (extras != null) {
+                    msg = extras.getString(LinkConnectionStatus.EXTRA_ERROR_MSG);
+                }
+                alertUser("Connection Failed:" + msg);
+                break;
         }
     }
 
@@ -480,4 +474,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             });
         }
     }
+
+//I don't understand What those are========================================================================================================================================================================
+private void checkSoloState() {
+    final SoloState soloState = drone.getAttribute(SoloAttributes.SOLO_STATE);
+    if (soloState == null){
+        alertUser("Unable to retrieve the solo state.");
+    }
+    else {
+        alertUser("Solo state is up to date.");
+    }
+}
 }
