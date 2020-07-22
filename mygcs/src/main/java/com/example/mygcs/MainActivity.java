@@ -1,17 +1,21 @@
 package com.example.mygcs;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
-import android.graphics.SurfaceTexture;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.PermissionChecker;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.Surface;
-import android.view.TextureView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
@@ -22,19 +26,18 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.naver.maps.map.LocationSource;
 import com.naver.maps.map.MapFragment;
 import com.naver.maps.map.NaverMap;
 import com.naver.maps.map.OnMapReadyCallback;
+import com.naver.maps.map.overlay.LocationOverlay;
 import com.o3dr.android.client.ControlTower;
 import com.o3dr.android.client.Drone;
 import com.o3dr.android.client.apis.ControlApi;
-import com.o3dr.android.client.apis.ExperimentalApi;
 import com.o3dr.android.client.apis.VehicleApi;
-import com.o3dr.android.client.apis.solo.SoloCameraApi;
 import com.o3dr.android.client.interfaces.DroneListener;
 import com.o3dr.android.client.interfaces.LinkListener;
 import com.o3dr.android.client.interfaces.TowerListener;
-import com.o3dr.android.client.utils.video.DecoderListener;
 import com.o3dr.android.client.utils.video.MediaCodecManager;
 import com.o3dr.services.android.lib.coordinate.LatLong;
 import com.o3dr.services.android.lib.coordinate.LatLongAlt;
@@ -43,8 +46,6 @@ import com.o3dr.services.android.lib.drone.attribute.AttributeType;
 import com.o3dr.services.android.lib.drone.companion.solo.SoloAttributes;
 import com.o3dr.services.android.lib.drone.companion.solo.SoloState;
 import com.o3dr.services.android.lib.drone.connection.ConnectionParameter;
-import com.o3dr.services.android.lib.drone.connection.ConnectionType;
-import com.o3dr.services.android.lib.drone.mission.item.command.YawCondition;
 import com.o3dr.services.android.lib.drone.property.Altitude;
 import com.o3dr.services.android.lib.drone.property.Battery;
 import com.o3dr.services.android.lib.drone.property.Gps;
@@ -52,7 +53,6 @@ import com.o3dr.services.android.lib.drone.property.Home;
 import com.o3dr.services.android.lib.drone.property.Speed;
 import com.o3dr.services.android.lib.drone.property.State;
 import com.o3dr.services.android.lib.drone.property.Type;
-import com.o3dr.services.android.lib.drone.property.DroneAttribute;
 import com.o3dr.services.android.lib.drone.property.Attitude;
 import com.o3dr.services.android.lib.drone.property.VehicleMode;
 import com.o3dr.services.android.lib.gcs.link.LinkConnectionStatus;
@@ -63,7 +63,7 @@ import java.util.List;
 
 import static com.o3dr.services.android.lib.drone.attribute.AttributeType.BATTERY;
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, DroneListener, TowerListener, LinkListener {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, DroneListener, TowerListener, LinkListener, LocationSource, LocationListener {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
@@ -80,6 +80,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private MediaCodecManager mediaCodecManager;
 
     Handler mainHandler;
+
+    public MainActivity(@NonNull Context context, @Nullable LocationManager locationManager) {
+        this.context = context;
+        this.locationManager = locationManager;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -130,6 +135,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mediaCodecManager = new MediaCodecManager(mediaCodecHandler);
 
         mainHandler = new Handler(getApplicationContext().getMainLooper());
+
+
+        LocationOverlay locationOverlay = mymap.getLocationOverlay();
+        locationOverlay.setVisible(true);
 
         }
 //Operate Event=====================================================================================================================================================================================================
@@ -295,7 +304,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         return Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
 
-//Vehicle Value==============================================================================================================================================================================================
+//Vehicle Value=======================================================================================================================================================================================================================
     public void onFlightModeSelected(View view) {
         VehicleMode vehicleMode = (VehicleMode) this.modeSelector.getSelectedItem();
 
@@ -485,4 +494,56 @@ private void checkSoloState() {
         alertUser("Solo state is up to date.");
     }
 }
+
+//드론 위치========================================================================================================================================================================
+    @NonNull
+    private Context context;
+    @Nullable
+    private LocationManager locationManager;
+    @Nullable
+    private LocationSource.OnLocationChangedListener listener;
+
+    public void GpsOnlyLocationSource(@NonNull Context context) {
+        this.context = context;
+        locationManager = (LocationManager)context.getSystemService(Context.LOCATION_SERVICE);
+    }
+
+    @Override
+    public void activate(
+            @NonNull LocationSource.OnLocationChangedListener listener) {
+        if (locationManager == null) {
+            return;
+        }
+
+        if (PermissionChecker.checkSelfPermission(context,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED
+                && PermissionChecker.checkSelfPermission(context,
+                Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            // 권한 요청 로직 생략
+            return;
+        }
+
+        this.listener = listener;
+        locationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER, 1000, 10, this);
+    }
+
+    @Override
+    public void deactivate() {
+        if (locationManager == null) {
+            return;
+        }
+
+        listener = null;
+        locationManager.removeUpdates(this);
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        if (listener != null) {
+            listener.onLocationChanged(location);
+        }
+    }
 }
