@@ -1,18 +1,22 @@
 package com.example.mygcs;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.PermissionChecker;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -59,15 +63,17 @@ import com.o3dr.services.android.lib.gcs.link.LinkConnectionStatus;
 import com.o3dr.services.android.lib.model.AbstractCommandListener;
 import com.o3dr.services.android.lib.model.SimpleCommandListener;
 
+import java.text.BreakIterator;
 import java.util.List;
 
 import static com.o3dr.services.android.lib.drone.attribute.AttributeType.BATTERY;
+import static java.security.AccessController.getContext;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, DroneListener, TowerListener, LinkListener, LocationSource, LocationListener {
 
-    private static final String TAG = MainActivity.class.getSimpleName();
-
     NaverMap mymap;
+
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     private Drone drone;
     private int droneType = Type.TYPE_UNKNOWN;
@@ -80,6 +86,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private MediaCodecManager mediaCodecManager;
 
     Handler mainHandler;
+    private Object userVO;
 
     public MainActivity(@NonNull Context context, @Nullable LocationManager locationManager) {
         this.context = context;
@@ -92,6 +99,43 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN); // 핸드폰 맨위 시간, 안테나 타이틀 없애기
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE); // 가로모드 고정
+        final LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE); //GPS 위치 관리자 객체 참조하기
+
+        /* GPS 모바일 화면에 보이게 하는 코드
+        button1 = (Button)findViewById(R.id.button1);
+        txtResult = (TextView)findViewById(R.id.txtResult);
+
+        View button1;
+        button1.setOnClickListener(new View.OnClickListener() {
+            private BreakIterator txtResult;
+
+            @Override
+            public void onClick(View v) {
+                if ( Build.VERSION.SDK_INT >= 23 &&
+                        ContextCompat.checkSelfPermission( getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION ) != PackageManager.PERMISSION_GRANTED ) {
+                    ActivityCompat.requestPermissions( MainActivity.this, new String[] {  android.Manifest.permission.ACCESS_FINE_LOCATION  },
+                            0 );
+                }
+                else{
+                    Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                    String provider = location.getProvider();
+                    double longitude = location.getLongitude();
+                    double latitude = location.getLatitude();
+                    double altitude = location.getAltitude();
+
+                    txtResult.setText("위치정보 : " + provider + "\n" + "위도 : " + longitude + "\n" + "경도 : " + latitude + "\n" + "고도  : " + altitude);
+
+                    lm.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                            1000,
+                            1,
+                            gpsLocationListener);
+                    lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+                            1000,
+                            1,
+                            gpsLocationListener);
+                }
+            }
+        });  */
 
         setContentView(R.layout.activity_main);
 
@@ -136,11 +180,34 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         mainHandler = new Handler(getApplicationContext().getMainLooper());
 
-
+        //over lay
         LocationOverlay locationOverlay = mymap.getLocationOverlay();
         locationOverlay.setVisible(true);
+    }
+//Get_DroneGPS========================================================================================================================================================================================================
+    final LocationListener gpsLocationListener = new LocationListener() {
+    private BreakIterator txtResult;
 
-        }
+    public void onLocationChanged(Location location) {
+
+            String provider = location.getProvider();
+            double longitude = location.getLongitude();
+            double latitude = location.getLatitude();
+            double altitude = location.getAltitude();
+
+            txtResult.setText("위치정보 : " + provider + "\n" + "위도 : " + longitude + "\n" + "경도 : " + latitude + "\n" + "고도  : " + altitude);
+    }
+
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+    }
+
+    public void onProviderEnabled(String provider) {
+    }
+
+    public void onProviderDisabled(String provider) {
+    }
+};
+
 //Operate Event=====================================================================================================================================================================================================
     @Override
     public void onStart() {
@@ -495,7 +562,7 @@ private void checkSoloState() {
     }
 }
 
-//드론 위치========================================================================================================================================================================
+//객체 중심 맵 위치========================================================================================================================================================================
     @NonNull
     private Context context;
     @Nullable
