@@ -69,7 +69,7 @@ import java.util.List;
 import static com.o3dr.services.android.lib.drone.attribute.AttributeType.BATTERY;
 import static java.security.AccessController.getContext;
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, DroneListener, TowerListener, LinkListener, LocationSource, LocationListener {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, DroneListener, TowerListener, LinkListener{
 
     NaverMap mymap;
 
@@ -79,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private int droneType = Type.TYPE_UNKNOWN;
     private ControlTower controlTower;
     private boolean connectDrone = false;
-    private LinearLayout armingbtn ;
+    private LinearLayout armingbtn;
     private final Handler handler = new Handler();
     private Spinner modeSelector;
 
@@ -88,16 +88,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     Handler mainHandler;
     private Object userVO;
 
-    public MainActivity(@NonNull Context context, @Nullable LocationManager locationManager) {
-        this.context = context;
-        this.locationManager = locationManager;
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN); // 핸드폰 맨위 시간, 안테나 타이틀 없애기
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN); // 핸드폰 맨위 시간, 안테나 타이틀 없애기
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE); // 가로모드 고정
         final LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE); //GPS 위치 관리자 객체 참조하기
 
@@ -140,15 +135,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(R.layout.activity_main);
 
         FragmentManager fm = getSupportFragmentManager();
-        MapFragment mapFragment = (MapFragment)fm.findFragmentById(R.id.map);
+        MapFragment mapFragment = (MapFragment) fm.findFragmentById(R.id.map);
 
         if (mapFragment == null) {
             mapFragment = MapFragment.newInstance();
             fm.beginTransaction().add(R.id.map, mapFragment).commit();
         }
 
-        if(!connectDrone) {
-            armingbtn = (LinearLayout)findViewById(R.id.connectmenu) ;
+        if (!connectDrone) {
+            armingbtn = (LinearLayout) findViewById(R.id.connectmenu);
             armingbtn.setVisibility(View.INVISIBLE);
         }
 
@@ -184,11 +179,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         LocationOverlay locationOverlay = mymap.getLocationOverlay();
         locationOverlay.setVisible(true);
     }
-//Get_DroneGPS========================================================================================================================================================================================================
-    final LocationListener gpsLocationListener = new LocationListener() {
-    private BreakIterator txtResult;
 
-    public void onLocationChanged(Location location) {
+    //Get_DroneGPS========================================================================================================================================================================================================
+    final LocationListener gpsLocationListener = new LocationListener() {
+        private BreakIterator txtResult;
+
+        public void onLocationChanged(Location location) {
 
             String provider = location.getProvider();
             double longitude = location.getLongitude();
@@ -196,19 +192,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             double altitude = location.getAltitude();
 
             txtResult.setText("위치정보 : " + provider + "\n" + "위도 : " + longitude + "\n" + "경도 : " + latitude + "\n" + "고도  : " + altitude);
-    }
+        }
 
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-    }
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+        }
 
-    public void onProviderEnabled(String provider) {
-    }
+        public void onProviderEnabled(String provider) {
+        }
 
-    public void onProviderDisabled(String provider) {
-    }
-};
+        public void onProviderDisabled(String provider) {
+        }
+    };
 
-//Operate Event=====================================================================================================================================================================================================
+    //Operate Event=====================================================================================================================================================================================================
     @Override
     public void onStart() {
         super.onStart();
@@ -326,8 +322,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    public void btn_event(View v){
-        switch(v.getId()){
+    public void btn_event(View v) {
+        switch (v.getId()) {
             case R.id.btnconnect:
                 onBtnConnectTap();
                 break;
@@ -340,7 +336,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-//Distance=================================================================================================================================================================================================
+    //Distance=================================================================================================================================================================================================
     protected void updateDistanceFromHome() {
         TextView distanceTextView = (TextView) findViewById(R.id.yawValueTextView);
         Altitude droneAltitude = this.drone.getAttribute(AttributeType.ALTITUDE);
@@ -371,7 +367,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         return Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
 
-//Vehicle Value=======================================================================================================================================================================================================================
+    //Vehicle Value=======================================================================================================================================================================================================================
     public void onFlightModeSelected(View view) {
         VehicleMode vehicleMode = (VehicleMode) this.modeSelector.getSelectedItem();
 
@@ -405,28 +401,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         altitudeTextView.setText(String.format("%3.1f", droneAltitude.getAltitude()) + "m");
     }
 
-    protected void updateBatteryVolt(){
-        TextView voltTextView = (TextView)findViewById(R.id.batteryVoltageValueTextView);
+    protected void updateBatteryVolt() {
+        TextView voltTextView = (TextView) findViewById(R.id.batteryVoltageValueTextView);
         Battery droneVolt = this.drone.getAttribute(BATTERY);
-        Log.d("MYLOG","베터리 변화 : " + droneVolt.getBatteryVoltage());
-        voltTextView.setText(String.format(" " + droneVolt.getBatteryVoltage()+"V"));
+        Log.d("MYLOG", "베터리 변화 : " + droneVolt.getBatteryVoltage());
+        voltTextView.setText(String.format(" " + droneVolt.getBatteryVoltage() + "V"));
     }
 
     protected void updateYaw() {
-        TextView yawTextView = (TextView)findViewById(R.id.yawValueTextView);
+        TextView yawTextView = (TextView) findViewById(R.id.yawValueTextView);
         Attitude droneyaw = this.drone.getAttribute(AttributeType.ATTITUDE);
-        Log.d("MYLOG","yaw : " + droneyaw.getYaw());
+        Log.d("MYLOG", "yaw : " + droneyaw.getYaw());
         yawTextView.setText(String.format("%3.1f", droneyaw.getYaw()) + "deg");
     }
 
     protected void updateNumberOfSatellites() {
-        TextView numberOfSatellitesTextView = (TextView)findViewById(R.id.numberofSatellitesValueTextView);
+        TextView numberOfSatellitesTextView = (TextView) findViewById(R.id.numberofSatellitesValueTextView);
         Gps droneNumberOfSatellites = this.drone.getAttribute(AttributeType.GPS);
         Log.d("MYLOG", "위성 수 변화 : " + droneNumberOfSatellites.getSatellitesCount());
         numberOfSatellitesTextView.setText(String.format("%d", droneNumberOfSatellites.getSatellitesCount()));
     }
 
-//Button=================================================================================================================================================================================================
+    //Button=================================================================================================================================================================================================
     protected void updateConnectedButton(Boolean isConnected) {
         Button connectButton = (Button) findViewById(R.id.btnconnect);
         if (isConnected) {
@@ -462,7 +458,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-//Helper===================================================================================================================================================================================================
+    //Helper===================================================================================================================================================================================================
     protected void alertUser(String message) {
         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
         Log.d(TAG, message);
@@ -470,7 +466,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onLinkStateUpdated(@NonNull LinkConnectionStatus connectionStatus) {
-        switch(connectionStatus.getStatusCode()){
+        switch (connectionStatus.getStatusCode()) {
             case LinkConnectionStatus.FAILED:
                 Bundle extras = connectionStatus.getExtras();
                 String msg = null;
@@ -551,66 +547,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-//I don't understand What those are========================================================================================================================================================================
-private void checkSoloState() {
-    final SoloState soloState = drone.getAttribute(SoloAttributes.SOLO_STATE);
-    if (soloState == null){
-        alertUser("Unable to retrieve the solo state.");
-    }
-    else {
-        alertUser("Solo state is up to date.");
-    }
-}
-
-//객체 중심 맵 위치========================================================================================================================================================================
-    @NonNull
-    private Context context;
-    @Nullable
-    private LocationManager locationManager;
-    @Nullable
-    private LocationSource.OnLocationChangedListener listener;
-
-    public void GpsOnlyLocationSource(@NonNull Context context) {
-        this.context = context;
-        locationManager = (LocationManager)context.getSystemService(Context.LOCATION_SERVICE);
-    }
-
-    @Override
-    public void activate(
-            @NonNull LocationSource.OnLocationChangedListener listener) {
-        if (locationManager == null) {
-            return;
+    //I don't understand What those are========================================================================================================================================================================
+    private void checkSoloState() {
+        final SoloState soloState = drone.getAttribute(SoloAttributes.SOLO_STATE);
+        if (soloState == null) {
+            alertUser("Unable to retrieve the solo state.");
+        } else {
+            alertUser("Solo state is up to date.");
         }
 
-        if (PermissionChecker.checkSelfPermission(context,
-                Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED
-                && PermissionChecker.checkSelfPermission(context,
-                Manifest.permission.ACCESS_COARSE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            // 권한 요청 로직 생략
-            return;
-        }
-
-        this.listener = listener;
-        locationManager.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER, 1000, 10, this);
-    }
-
-    @Override
-    public void deactivate() {
-        if (locationManager == null) {
-            return;
-        }
-
-        listener = null;
-        locationManager.removeUpdates(this);
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        if (listener != null) {
-            listener.onLocationChanged(location);
-        }
     }
 }
