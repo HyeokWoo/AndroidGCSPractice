@@ -30,11 +30,13 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.naver.maps.geometry.LatLng;
 import com.naver.maps.map.LocationSource;
 import com.naver.maps.map.MapFragment;
 import com.naver.maps.map.NaverMap;
 import com.naver.maps.map.OnMapReadyCallback;
 import com.naver.maps.map.overlay.LocationOverlay;
+import com.naver.maps.map.overlay.OverlayImage;
 import com.o3dr.android.client.ControlTower;
 import com.o3dr.android.client.Drone;
 import com.o3dr.android.client.apis.ControlApi;
@@ -174,35 +176,25 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mediaCodecManager = new MediaCodecManager(mediaCodecHandler);
 
         mainHandler = new Handler(getApplicationContext().getMainLooper());
-
-        //over lay
-        LocationOverlay locationOverlay = mymap.getLocationOverlay();
-        locationOverlay.setVisible(true);
     }
 
-    //Get_DroneGPS========================================================================================================================================================================================================
-    final LocationListener gpsLocationListener = new LocationListener() {
-        private BreakIterator txtResult;
+    //Overlay
+    public void overlay(){
+        try {
+            Gps droneGps = this.drone.getAttribute(AttributeType.GPS);
+            LatLng dronePosition = new LatLng(droneGps.getPosition().getLatitude(),droneGps.getPosition().getLongitude());
+            LocationOverlay locationOverlay = mymap.getLocationOverlay();
+            locationOverlay.setVisible(true);
+            locationOverlay.setBearing(90);;
+            locationOverlay.setPosition(dronePosition);
 
-        public void onLocationChanged(Location location) {
-
-            String provider = location.getProvider();
-            double longitude = location.getLongitude();
-            double latitude = location.getLatitude();
-            double altitude = location.getAltitude();
-
-            txtResult.setText("위치정보 : " + provider + "\n" + "위도 : " + longitude + "\n" + "경도 : " + latitude + "\n" + "고도  : " + altitude);
+        } catch (NullPointerException e) {
+            Log.d("myLog", "getPosition Error : " + e.getMessage());
+            LocationOverlay locationOverlay = mymap.getLocationOverlay();
+            locationOverlay.setVisible(true);
+            locationOverlay.setPosition(new LatLng(35.942339, 126.683388));
         }
-
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-        }
-
-        public void onProviderEnabled(String provider) {
-        }
-
-        public void onProviderDisabled(String provider) {
-        }
-    };
+    }
 
     //Operate Event=====================================================================================================================================================================================================
     @Override
@@ -241,11 +233,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         this.mymap = naverMap;
         mymap.setMapType(NaverMap.MapType.Satellite);
+        overlay();
 
     }
 
     @Override
     public void onDroneEvent(String event, Bundle extras) {
+        Log.d("testLog", event.toString());
+
         switch (event) {
             case AttributeEvent.STATE_CONNECTED:
                 alertUser("Drone Connected");
@@ -299,6 +294,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             case AttributeEvent.GPS_COUNT:
                 updateNumberOfSatellites();
+                break;
+
+            case AttributeEvent.GPS_POSITION:
+                overlay();
                 break;
 
             default:

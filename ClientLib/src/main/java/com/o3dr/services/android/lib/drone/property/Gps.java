@@ -3,6 +3,7 @@ package com.o3dr.services.android.lib.drone.property;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.o3dr.services.android.lib.coordinate.LatLong;
 
 /**
@@ -81,7 +82,7 @@ public class Gps implements DroneAttribute {
     }
 
     public LatLong getPosition() {
-        if (isValid()) {
+            if (isValid()) {
             return position;
         } else {
             return null;
