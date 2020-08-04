@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.graphics.PointF;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -183,9 +184,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         try {
             Gps droneGps = this.drone.getAttribute(AttributeType.GPS);
             LatLng dronePosition = new LatLng(droneGps.getPosition().getLatitude(),droneGps.getPosition().getLongitude());
+
             LocationOverlay locationOverlay = mymap.getLocationOverlay();
             locationOverlay.setVisible(true);
-            locationOverlay.setBearing(90);;
+
+            locationOverlay.setBearing(90);
+
+            locationOverlay.setIcon(OverlayImage.fromResource(R.drawable.flight));
+            locationOverlay.setIconWidth(LocationOverlay.SIZE_AUTO);
+            locationOverlay.setIconHeight(LocationOverlay.SIZE_AUTO);
+
             locationOverlay.setPosition(dronePosition);
 
         } catch (NullPointerException e) {
@@ -193,6 +201,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             LocationOverlay locationOverlay = mymap.getLocationOverlay();
             locationOverlay.setVisible(true);
             locationOverlay.setPosition(new LatLng(35.942339, 126.683388));
+
+            locationOverlay.setIcon(OverlayImage.fromResource(R.drawable.flight));
+            locationOverlay.setIconWidth(LocationOverlay.SIZE_AUTO);
+            locationOverlay.setIconHeight(LocationOverlay.SIZE_AUTO);
         }
     }
 
@@ -232,7 +244,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(@NonNull NaverMap naverMap) {
 
         this.mymap = naverMap;
-        mymap.setMapType(NaverMap.MapType.Satellite);
         overlay();
 
     }
