@@ -179,6 +179,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mainHandler = new Handler(getApplicationContext().getMainLooper());
     }
 
+    @Override
+    public void onMapReady(@NonNull NaverMap naverMap) {
+        this.mymap = naverMap;
+        overlay();
+    }
+
+    //Operate Event=====================================================================================================================================================================================================
     //Overlay
     public void overlay(){
         try {
@@ -208,7 +215,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    //Operate Event=====================================================================================================================================================================================================
+
+
     @Override
     public void onStart() {
         super.onStart();
@@ -238,14 +246,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onTowerDisconnected() {
         alertUser("DroneKit-Android Interrupted");
-    }
-
-    @Override
-    public void onMapReady(@NonNull NaverMap naverMap) {
-
-        this.mymap = naverMap;
-        overlay();
-
     }
 
     @Override
@@ -418,11 +418,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         voltTextView.setText(String.format(" " + droneVolt.getBatteryVoltage() + "V"));
     }
 
-    protected void updateYaw() {
-        TextView yawTextView = (TextView) findViewById(R.id.yawValueTextView);
+    protected void updateYaw(){
+        LocationOverlay locationOverlay = mymap.getLocationOverlay();
+        double yawvalue=0;
+        TextView yawTextView = (TextView)findViewById(R.id.yawValueTextView);
         Attitude droneyaw = this.drone.getAttribute(AttributeType.ATTITUDE);
-        Log.d("MYLOG", "yaw : " + droneyaw.getYaw());
-        yawTextView.setText(String.format("%3.1f", droneyaw.getYaw()) + "deg");
+        if(droneyaw.getYaw()<0)
+            yawvalue = droneyaw.getYaw()+360;
+        else
+            yawvalue = droneyaw.getYaw();
+
+        yawTextView.setText(String.format("%3.1f",yawvalue));
+        locationOverlay.setBearing((float) droneyaw.getYaw());
     }
 
     protected void updateNumberOfSatellites() {
