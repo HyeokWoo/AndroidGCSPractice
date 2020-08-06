@@ -13,7 +13,7 @@
         android:layout_height="match_parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.0" />
@@ -30,12 +30,13 @@
     <LinearLayout
         android:id="@+id/linearLayout"
         android:layout_width="match_parent"
-        android:layout_height="30dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="30dp"
         android:background="#444444"
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="@+id/map"
         app:layout_constraintStart_toStartOf="@+id/map"
-        app:layout_constraintTop_toTopOf="@+id/map">
+        app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:id="@+id/batteryVoltageLabelTextView"
@@ -43,8 +44,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="전압 :"
-            android:textColor="#ffffff"
-            />
+            android:textColor="#ffffff" />
 
         <TextView
             android:id="@+id/batteryVoltageValueTextView"
@@ -52,8 +52,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="0v"
-            android:textColor="#ffffff"
-             />
+            android:textColor="#ffffff" />
 
         <TextView
             android:id="@+id/flightModeSelectorLabelTextView"
@@ -61,15 +60,13 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="비행모드 :"
-            android:textColor="#ffffff"
-            />
+            android:textColor="#ffffff" />
 
         <Spinner
             android:id="@+id/flightModeSelectorSpinner"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_weight="1"
-            />
+            android:layout_weight="1" />
 
         <TextView
             android:id="@+id/altitudeLabelTextView"
@@ -77,8 +74,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="고도 :"
-            android:textColor="#ffffff"
-            />
+            android:textColor="#ffffff" />
 
         <TextView
             android:id="@+id/altitudeValueTextView"
@@ -86,8 +82,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="0m"
-            android:textColor="#ffffff"
-            />
+            android:textColor="#ffffff" />
 
         <TextView
             android:id="@+id/speedLableTextView"
@@ -95,8 +90,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="속도 :"
-            android:textColor="#ffffff"
-            />
+            android:textColor="#ffffff" />
 
         <TextView
             android:id="@+id/speedValueTextView"
@@ -104,8 +98,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="0m/s"
-            android:textColor="#ffffff"
-            />
+            android:textColor="#ffffff" />
 
         <TextView
             android:id="@+id/yawLabelTextView"
@@ -113,8 +106,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="YAW :"
-            android:textColor="#ffffff"
-            />
+            android:textColor="#ffffff" />
 
         <TextView
             android:id="@+id/yawValueTextView"
@@ -122,8 +114,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="0deg"
-            android:textColor="#ffffff"
-            />
+            android:textColor="#ffffff" />
 
         <TextView
             android:id="@+id/numberofSatellitesLabelTextView"
@@ -131,8 +122,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="위성 수 :"
-            android:textColor="#ffffff"
-            />
+            android:textColor="#ffffff" />
 
         <TextView
             android:id="@+id/numberofSatellitesValueTextView"
@@ -140,8 +130,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="0"
-            android:textColor="#ffffff"
-            />
+            android:textColor="#ffffff" />
     </LinearLayout>
 
     <LinearLayout
@@ -155,17 +144,71 @@
 
         <Button
             android:id="@+id/btnarm"
-            android:onClick="btn_event"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:onClick="btn_event"
             android:text="arm" />
 
         <Button
             android:id="@+id/btnland"
-            android:onClick="btn_event"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:onClick="btn_event"
             android:text="land" />
     </LinearLayout>
+
+    <Button
+        android:id="@+id/takeoffset"
+        android:layout_width="60dp"
+        android:layout_height="41dp"
+        android:onClick="btn_event"
+        android:text="0.0m\n이륙고도"
+        android:textSize="4pt"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/map"
+        app:layout_constraintHorizontal_bias="0.975"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.114" />
+
+    <LinearLayout
+        android:id="@+id/takeoffList"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="@+id/map"
+        app:layout_constraintEnd_toEndOf="@id/takeoffset"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.252">
+
+        <Button
+            android:id="@+id/drone_rise"
+            android:layout_width="60dp"
+            android:layout_height="41dp"
+            android:onClick="btn_event"
+            android:text="+1.0"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="@+id/map"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="1.0" />
+
+        <Button
+            android:id="@+id/drone_fall"
+            android:layout_width="60dp"
+            android:layout_height="41dp"
+            android:onClick="btn_event"
+            android:text="-1.0"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="@+id/map"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="1.0" />
+    </LinearLayout>
+
 
 </android.support.constraint.ConstraintLayout>
