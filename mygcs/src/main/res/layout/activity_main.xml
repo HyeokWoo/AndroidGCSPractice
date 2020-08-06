@@ -162,7 +162,7 @@
         android:layout_width="60dp"
         android:layout_height="41dp"
         android:onClick="btn_event"
-        android:text="0.0m\n이륙고도"
+        android:text="5.5m\n이륙고도"
         android:textSize="4pt"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/map"
