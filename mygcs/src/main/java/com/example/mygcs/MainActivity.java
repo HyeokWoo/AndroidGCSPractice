@@ -164,6 +164,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         this.mymap = naverMap;
         overlay();
         actionGuideMode();
+        delGuideMode();
     }
 
     //<<GuideMode Class>>==================================================================================================================================================================================================================
@@ -255,7 +256,26 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
+    public void delGuideMode(){
+        Drone mydrone = this.drone;
 
+        if(guideMode.CheckGoal(mydrone,  guideMode.mGuidedPoint)){
+            VehicleApi.getApi(drone).setVehicleMode(VehicleMode.COPTER_LOITER, new AbstractCommandListener() {
+                @Override
+                public void onSuccess() {
+                    guideMode.mMarkerGuide.setMap(null);
+                }
+
+                @Override
+                public void onError(int i) {
+                }
+
+                @Override
+                public void onTimeout() {
+                }
+            });
+        }
+    }
 
     @Override
     public void onStart() {
@@ -298,6 +318,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 updateConnectedButton(this.drone.isConnected());
                 updateArmButton();
                 checkSoloState();
+                actionGuideMode();
                 break;
 
             case AttributeEvent.STATE_DISCONNECTED:
@@ -349,6 +370,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             case AttributeEvent.GPS_POSITION:
                 overlay();
+                delGuideMode();
                 break;
 
             default:
