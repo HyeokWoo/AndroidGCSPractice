@@ -35,6 +35,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.naver.maps.geometry.LatLng;
+import com.naver.maps.map.CameraUpdate;
 import com.naver.maps.map.LocationSource;
 import com.naver.maps.map.MapFragment;
 import com.naver.maps.map.NaverMap;
@@ -110,6 +111,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private boolean mapoption = false;
     private boolean mapcads =false;
     private boolean mapfollow = true;
+    private LocationOverlay locationOverlay;
 
 
     @Override
@@ -177,7 +179,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(@NonNull NaverMap naverMap) {
         this.mymap = naverMap;
-        overlay();
+        droneLocation();
 
         mymap.setOnMapLongClickListener(new NaverMap.OnMapLongClickListener() {
             @Override
@@ -238,7 +240,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     //Operate Event=====================================================================================================================================================================================================
     //Overlay
-    public void overlay() {
+    public void droneLocation() {
         try {
             Gps droneGps = this.drone.getAttribute(AttributeType.GPS);
             LatLng dronePosition = new LatLng(droneGps.getPosition().getLatitude(), droneGps.getPosition().getLongitude());
@@ -442,8 +444,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 break;
 
             case AttributeEvent.GPS_POSITION:
-                overlay();
+                droneLocation();
                 delGuideMode();
+                updatetrack();
                 break;
 
             default:
@@ -840,6 +843,35 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     //Helper===================================================================================================================================================================================================
+    protected void updatetrack(){
+        try{
+
+            Gps dronegps = this.drone.getAttribute(AttributeType.GPS);
+            LatLng droneposition = new LatLng(dronegps.getPosition().getLatitude(),dronegps.getPosition().getLongitude());
+
+            Log.d("GPSERROR1",""+droneposition.latitude);
+            this.locationOverlay = mymap.getLocationOverlay();
+            locationOverlay.setVisible(true);
+            locationOverlay.setIcon(OverlayImage.fromResource(R.drawable.flight));
+            locationOverlay.setPosition(droneposition);
+            if(mapfollow)
+                mymap.moveCamera(CameraUpdate.scrollTo(droneposition));
+        }catch(NullPointerException e){
+            Log.d("GPSERROR","GPS POSITION NULL");
+            // locationOverlay = mymap.getLocationOverlay();
+            this.locationOverlay = mymap.getLocationOverlay();
+            locationOverlay.setVisible(true);
+            locationOverlay.setIcon(OverlayImage.fromResource(R.drawable.flight));
+            locationOverlay.setPosition(new LatLng(35.945378,126.682110));
+            //locationOverlay.setAnchor(new PointF((float)0.5,(float)0.5));
+            if(mapfollow)
+                mymap.moveCamera(CameraUpdate.scrollTo(new LatLng(35.945378,126.682110)));
+
+        }
+        //
+        //mymap.setLocationTrackingMode(LocationTrackingMode.Follow);
+    }
+    
     protected void alertUser(String message) {
         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
         Log.d(TAG, message);
