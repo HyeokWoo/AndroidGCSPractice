@@ -2,6 +2,7 @@ package com.example.mygcs;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Notification;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
@@ -90,7 +91,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private int droneType = Type.TYPE_UNKNOWN;
     private ControlTower controlTower;
     private boolean connectDrone = false;
-    private LinearLayout armingbtn;
     private final Handler handler = new Handler();
     private Spinner modeSelector;
     private boolean altitudeset = false;
@@ -99,10 +99,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Button takeoffmenu;
     private MediaCodecManager mediaCodecManager;
     private ArrayList<LatLng> pathcoords = new ArrayList<>();
+    PolylineOverlay dronePath = new PolylineOverlay();
     Handler mainHandler;
     private Object userVO;
     private GuideMode guideMode;
-    PolylineOverlay dronePath = new PolylineOverlay();
+    private LinearLayout armingbtn;
+    private LinearLayout btnset;
+    private boolean togglebtn = false;
+    private boolean maplock = false;
+    private boolean mapoption = false;
+    private boolean mapcads =false;
+    private boolean mapfollow = true;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -128,6 +136,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
 
         mapFragment.getMapAsync(this);
+
+        LinearLayout list1 = (LinearLayout)findViewById(R.id.maplocklayer);
+        LinearLayout list2 = (LinearLayout)findViewById(R.id.mapoptionlayer);
+        LinearLayout list3 = (LinearLayout)findViewById(R.id.mapcadstrallayer);
+        btnset =(LinearLayout)findViewById(R.id.linearLayout3);
+        btnset.setVisibility(View.INVISIBLE);
+        list1.setVisibility(View.INVISIBLE);
+        list2.setVisibility(View.INVISIBLE);
+        list3.setVisibility(View.INVISIBLE);
+
 
         final Context context = getApplicationContext();
         this.controlTower = new ControlTower(context);
@@ -269,6 +287,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (vehicleState.isConnected()) {
             if (vehicleState.isArmed()) {
                 if(vehicleState.isFlying()) {
+                    pathLine();
                     guideMode.mGuidedPoint = targetPoint;
                     guideMode.mMarkerGuide.setPosition(guideMode.mGuidedPoint);
                     guideMode.mMarkerGuide.setMap(mymap);
@@ -425,7 +444,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             case AttributeEvent.GPS_POSITION:
                 overlay();
                 delGuideMode();
-                pathLine();
                 break;
 
             default:
@@ -467,6 +485,47 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 break;
             case R.id.drone_fall:
                 onDescTap();
+                break;
+            case R.id.maplockbtn:
+                maplock = !maplock;
+                LinearLayout list = (LinearLayout)findViewById(R.id.maplocklayer);
+                onMapbtnTap(list,maplock);
+                break;
+            case R.id.mapoptionbtn:
+                mapoption = !mapoption;
+                LinearLayout list1 = (LinearLayout)findViewById(R.id.mapoptionlayer);
+                onMapbtnTap(list1,mapoption);
+                break;
+            case R.id.mapcadastral:
+                mapcads = !mapcads;
+                LinearLayout list2 = (LinearLayout)findViewById(R.id.mapcadstrallayer);
+                onMapbtnTap(list2,mapcads);
+                break;
+            case R.id.maplock:
+                mapfollow = true;
+                mapfollowTap();
+                break;
+            case R.id.mapmove:
+                mapfollow = false;
+                mapfollowTap();
+                break;
+            case R.id.basicmap:
+                onMapOptionTap(R.id.basicmap);
+                break;
+            case R.id.satellitemap:
+                onMapOptionTap(R.id.satellitemap);
+                break;
+            case R.id.hybridmap:
+                onMapOptionTap(R.id.hybridmap);
+                break;
+            case R.id.cadaston:
+                onCadastTap(R.id.cadaston);
+                break;
+            case R.id.cadastoff:
+                onCadastTap(R.id.cadastoff);
+                break;
+            case R.id.toggle:
+                onToggleTap();
                 break;
 
         }
@@ -599,6 +658,88 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         } else if (vehicleState.isConnected()) {
             // Connected but not Armed
             armButton.setText("ARM");
+        }
+    }
+
+    //지도 옵션 버튼
+    public void onToggleTap(){
+        togglebtn = !togglebtn;
+        LinearLayout list1 = (LinearLayout)findViewById(R.id.maplocklayer);
+        LinearLayout list2 = (LinearLayout)findViewById(R.id.mapoptionlayer);
+        LinearLayout list3 = (LinearLayout)findViewById(R.id.mapcadstrallayer);
+        if(togglebtn){
+            btnset.setVisibility(View.VISIBLE);
+        }
+        else{
+            maplock = false;
+            mapoption = false;
+            mapcads = false;
+            list1.setVisibility(View.INVISIBLE);
+            list2.setVisibility(View.INVISIBLE);
+            list3.setVisibility(View.INVISIBLE);
+            btnset.setVisibility(View.INVISIBLE);
+        }
+
+    }
+    public void onCadastTap(int id){
+        Button cadastbtn = (Button)findViewById(R.id.mapcadastral);
+        LinearLayout list = (LinearLayout)findViewById(R.id.mapcadstrallayer);
+
+        switch(id){
+            case R.id.cadaston:
+                mymap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_CADASTRAL, true);
+                cadastbtn.setText("지적도on");
+                break;
+            case R.id.cadastoff:
+                mymap.setLayerGroupEnabled(NaverMap.LAYER_GROUP_CADASTRAL, false);
+                cadastbtn.setText("지적도off");
+                break;
+        }
+        mapcads = false;
+        list.setVisibility(View.INVISIBLE);
+    }
+    public void onMapOptionTap(int id){
+        Button mapoptionbtn = (Button)findViewById(R.id.mapoptionbtn);
+        LinearLayout list = (LinearLayout)findViewById(R.id.mapoptionlayer);
+
+        switch(id)
+        {
+            case R.id.basicmap:
+                mymap.setMapType(NaverMap.MapType.Basic);
+                mapoptionbtn.setText("기본지도");
+                break;
+            case R.id.satellitemap:
+                mymap.setMapType(NaverMap.MapType.Satellite);
+                mapoptionbtn.setText("위성지도");
+                break;
+            case R.id.hybridmap:
+                mymap.setMapType(NaverMap.MapType.Hybrid);
+                mapoptionbtn.setText("hybrid");
+                break;
+
+        }
+        mapoption = false;
+        list.setVisibility(View.INVISIBLE);
+    }
+    public void mapfollowTap(){
+        Button lockbtn = (Button)findViewById(R.id.maplockbtn);
+        LinearLayout list = (LinearLayout)findViewById(R.id.maplocklayer);
+
+        if(mapfollow)
+            lockbtn.setText("맵 잠금");
+        else
+            lockbtn.setText("맵 이동");
+
+        maplock = false;
+        list.setVisibility(View.INVISIBLE);
+    }
+
+    public void onMapbtnTap(LinearLayout list, boolean visual){
+        if(visual){
+            list.setVisibility(View.VISIBLE);
+        }
+        else{
+            list.setVisibility(View.INVISIBLE);
         }
     }
 
