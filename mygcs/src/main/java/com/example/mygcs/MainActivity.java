@@ -23,6 +23,8 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.PermissionChecker;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -112,6 +114,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private boolean mapcads =false;
     private boolean mapfollow = true;
     private LocationOverlay locationOverlay;
+    private ArrayList<String> alertlist = new ArrayList<>();
+    private RecyclerView recyclerView;
+    private StateTextAdapter adapter;
 
 
     @Override
@@ -139,6 +144,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         mapFragment.getMapAsync(this);
 
+        //mapMode
         LinearLayout list1 = (LinearLayout)findViewById(R.id.maplocklayer);
         LinearLayout list2 = (LinearLayout)findViewById(R.id.mapoptionlayer);
         LinearLayout list3 = (LinearLayout)findViewById(R.id.mapcadstrallayer);
@@ -147,6 +153,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         list1.setVisibility(View.INVISIBLE);
         list2.setVisibility(View.INVISIBLE);
         list3.setVisibility(View.INVISIBLE);
+
+        //recyclerView
+        LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
+        mLayoutManager.setReverseLayout(true);
+        mLayoutManager.setStackFromEnd(true);
+
+        recyclerView = findViewById(R.id.recycler_view);
+        recyclerView.setLayoutManager(mLayoutManager);
+
+        adapter = new StateTextAdapter(alertlist);
+        recyclerView.setAdapter(adapter);
 
 
         final Context context = getApplicationContext();
@@ -254,6 +271,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             locationOverlay.setPosition(dronePosition);
 
+            if(mapfollow)
+                mymap.moveCamera(CameraUpdate.scrollTo(dronePosition));
+
         } catch (NullPointerException e) {
             Log.d("myLog", "getPosition Error : " + e.getMessage());
             LocationOverlay locationOverlay = mymap.getLocationOverlay();
@@ -263,8 +283,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             locationOverlay.setIcon(OverlayImage.fromResource(R.drawable.flight));
             locationOverlay.setIconWidth(LocationOverlay.SIZE_AUTO);
             locationOverlay.setIconHeight(LocationOverlay.SIZE_AUTO);
+
+            if(mapfollow)
+                mymap.moveCamera(CameraUpdate.scrollTo(new LatLng(35.945378,126.682110)));
         }
     }
+
 
 /*
     public void actionGuideMode() {
@@ -289,13 +313,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (vehicleState.isConnected()) {
             if (vehicleState.isArmed()) {
                 if(vehicleState.isFlying()) {
-                    pathLine();
                     guideMode.mGuidedPoint = targetPoint;
                     guideMode.mMarkerGuide.setPosition(guideMode.mGuidedPoint);
                     guideMode.mMarkerGuide.setMap(mymap);
                     guideMode.mMarkerGuide.setIcon(OverlayImage.fromResource(R.drawable.destnation));
                     guideMode.DialogSimple(drone, new LatLong(targetPoint.latitude, targetPoint.longitude));
-                } else {
+               } else {
                     Toast.makeText(this, "비행중이 아니군요.", Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -446,7 +469,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             case AttributeEvent.GPS_POSITION:
                 droneLocation();
                 delGuideMode();
-                updatetrack();
+                pathLine();
                 break;
 
             default:
@@ -843,7 +866,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     //Helper===================================================================================================================================================================================================
-    protected void updatetrack(){
+   /* protected void updatetrack(){
         try{
 
             Gps dronegps = this.drone.getAttribute(AttributeType.GPS);
@@ -870,11 +893,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
         //
         //mymap.setLocationTrackingMode(LocationTrackingMode.Follow);
-    }
+    }*/
     
     protected void alertUser(String message) {
         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
         Log.d(TAG, message);
+        alertlist.add(message);
+
+        recyclerView.setAdapter(adapter);
+        recyclerView.scrollToPosition(alertlist.size()-1);
     }
 
     @Override
