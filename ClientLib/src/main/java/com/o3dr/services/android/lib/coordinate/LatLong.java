@@ -9,14 +9,12 @@ import java.io.Serializable;
  * Stores latitude and longitude in degrees.
  */
 public class LatLong implements Parcelable, Serializable {
-
     private static final long serialVersionUID =-5809863197722412339L;
-
     /**
      * Stores latitude, and longitude in degrees
      */
-    private double latitude;
-    private double longitude;
+    public double latitude;
+    public double longitude;
 
     public LatLong(double latitude, double longitude){
         this.latitude = latitude;
