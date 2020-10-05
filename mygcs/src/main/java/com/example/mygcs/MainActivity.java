@@ -126,7 +126,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private final Handler handler = new Handler();
     private FusedLocationSource locationSource;
     private NaverMap mymap;
-    private GuideMode guide;
     private ArrayList<LatLng> pathcoords = new ArrayList<>();
     private PathOverlay dronepath;
     private static final String[] PERMISSIONS = {
@@ -221,7 +220,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         list2.setVisibility(View.INVISIBLE);
         list3.setVisibility(View.INVISIBLE);
         list4.setVisibility(View.INVISIBLE);
-        guide = new GuideMode();
         dronepath = new PathOverlay();
 
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(this);
@@ -234,55 +232,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         adapter = new StateTextAdapter(alertlist);
         recyclerView.setAdapter(adapter);
 
-        // video layout #####################################
-       /* videoView = (TextureView) findViewById(R.id.textureView);
-        videoView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
-            @Override
-            public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-                alertUser("Video display is available.");
-
-            }
-
-            @Override
-            public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-
-            }
-
-            @Override
-            public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-                return true;
-            }
-
-            @Override
-            public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-
-            }
-        });
-        startVideoStream(new Surface(videoView.getSurfaceTexture()));
-        */
         mapFragment.getMapAsync(this);
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
     }
 
-    /*private void startVideoStream(Surface videoSurface) {
-        SoloCameraApi.getApi(drone).startVideoStream(videoSurface, videotag, true, new AbstractCommandListener() {
-            @Override
-            public void onSuccess() {
-                alertUser("Successfully started the video stream. ");
-
-            }
-
-            @Override
-            public void onError(int executionError) {
-                alertUser("Error while starting the video stream: " + executionError);
-            }
-
-            @Override
-            public void onTimeout() {
-                alertUser("Timed out while attempting to start the video stream.");
-            }
-        });
-    }*/
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions,  @NonNull int[] grantResults) {
@@ -296,6 +249,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onRequestPermissionsResult(
                 requestCode, permissions, grantResults);
     }
+
     @Override
     public void onMapReady(@NonNull NaverMap naverMap) {
         this.mymap = naverMap;
@@ -314,10 +268,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         uiSettings.setZoomControlEnabled(false);
 
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN); // 핸드폰 맨위 시간, 안테나 타이틀 없애기
-
-        mymap.setOnMapLongClickListener((pointF, latLng) -> {
-            droneguide(latLng);
-        });
 
         //임무 전송 버튼
         Button btnMission = (Button)findViewById(R.id.sendmission);
@@ -347,7 +297,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
-    //===============================================================================================================================================================
+    //======================================================================================<<자율주행 미션>>=============================================================================================
     //마커&좌표 넣기
     public void customMission(){
         LatLong stationPointM = new LatLong(35.942197, 126.678888);   //스테이션 좌표
@@ -378,8 +328,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         dronepath.setOutlineColor(Color.TRANSPARENT);
 
         dronepath.setMap(mymap);
+
+        alertUser("스테이션M 좌표:" + polygonPointList.get(0).getLatitude());
+        alertUser("스테이션1 좌표:" + polygonPointList.get(1).getLatitude());
+        alertUser("스테이션2 좌표:" + polygonPointList.get(2).getLatitude());
+        alertUser("스테이션3 좌표:" + polygonPointList.get(3).getLatitude());
     }
-    //mission
+
+    //setmission
     public void setMission(){
         Mission mMission = new Mission();
         for(int i=0;i<polygonPointList.size();i++){
@@ -395,29 +351,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     //startmission
-    public void startMission(){
-
-        MissionApi.getApi(this.drone).startMission(true, true, new AbstractCommandListener() {
-            @Override
-            public void onSuccess() {
-                alertUser("Mission on board");
-            }
-
-            @Override
-            public void onError(int executionError) {
-                alertUser("no mission on board");
-            }
-
-            @Override
-            public void onTimeout() {
-                alertUser("timeout");
-            }
-        });
-
-    }
-
     public void changetoAutomode(){
-        missioncount =0;
         VehicleApi.getApi(this.drone).setVehicleMode(VehicleMode.COPTER_AUTO,new SimpleCommandListener(){
             @Override
             public void onSuccess() {
@@ -456,102 +390,225 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
     }
+
     //gettoplatform
     public void getPlat(){
-        MissionApi.getApi(this.drone).pauseMission(null);
-        ControlApi.getApi(this.drone).climbTo(0);
+        //pauseMission();
+        ChangeToLoiterMode();
+        alertUser("Change to LoiterMode");
+
+        ControlApi.getApi(this.drone).climbTo(1);
         alertUser("approaching to the platform...");
+
         try{
-            Thread.sleep(5000);
-            //wait for onboard signal
+            Thread.sleep(5000); //wait for onboard signal
             ControlApi.getApi(this.drone).climbTo(dronealtitude);
-            alertUser("leaving...");
+            alertUser("leaving...Platform");
+
+            changetoAutomode();
+            alertUser("Change to AutoMode");
+
         }catch(InterruptedException e){
             alertUser("sleep denied");
             ControlApi.getApi(this.drone).climbTo(dronealtitude);
+
+            changetoAutomode();
+            alertUser("Change to AutoMode");
         }
+        /*
         finally{
             MissionApi.getApi(this.drone).startMission(true,true,null);
             alertUser("return to the mission..");
+        }*/
+
+    }
+/*
+    private void pauseMission() {
+        MissionApi.getApi(this.drone).pauseMission(null);
+    }*/
+
+    private void ChangeToLoiterMode() {
+        VehicleApi.getApi(this.drone).setVehicleMode(VehicleMode.COPTER_LOITER, new SimpleCommandListener() {
+            @Override
+            public void onSuccess() {
+                alertUser("Loiter 모드로 변경 중...");
+            }
+
+            @Override
+            public void onError(int executionError) {
+                alertUser("Loiter 모드 변경 실패 : " + executionError);
+            }
+
+            @Override
+            public void onTimeout() {
+                alertUser("Loiter 모드 변경 실패");
+            }
+        });
+    }
+    //========================================================================================<<드론 이벤트>>===========================================================================================
+    @Override
+    public void onDroneEvent(String event, Bundle extras) {
+        switch (event) {
+            case AttributeEvent.STATE_CONNECTED:
+                alertUser("Drone Connected");
+                updateConnectedButton(this.drone.isConnected());
+                updateArmButton();
+
+                checkSoloState();
+                break;
+
+            case AttributeEvent.STATE_DISCONNECTED:
+                alertUser("Drone Disconnected");
+                updateConnectedButton(this.drone.isConnected());
+                updateArmButton();
+
+                break;
+            case AttributeEvent.STATE_UPDATED:
+
+                break;
+            case AttributeEvent.STATE_ARMING:
+                updateArmButton();
+                break;
+            case AttributeEvent.TYPE_UPDATED:
+                Type newDroneType = this.drone.getAttribute(AttributeType.TYPE);
+                if (newDroneType.getDroneType() != this.droneType) {
+                    this.droneType = newDroneType.getDroneType();
+                    updateVehicleModesForType(this.droneType);
+                }
+                break;
+            case AttributeEvent.STATE_VEHICLE_MODE:
+                updateVehicleMode();
+
+                break;
+            case AttributeEvent.SPEED_UPDATED:
+                updateSpeed();
+                break;
+            case AttributeEvent.ALTITUDE_UPDATED:
+                updateAltitude();
+                break;
+            case AttributeEvent.GPS_POSITION:
+                updatetrack();
+                break;
+            case AttributeEvent.BATTERY_UPDATED:
+                updateVolt();
+                break;
+            case AttributeEvent.ATTITUDE_UPDATED:
+                updateYaw();
+                break;
+            case AttributeEvent.GPS_COUNT:
+                updateNumberOfSatellites();
+                break;
+            case AttributeEvent.MISSION_SENT:
+                alertUser("mission upload succ");
+                break;
+            case AttributeEvent.MISSION_ITEM_REACHED:
+                getPlat();
+                missioncount++;
+                if(missioncount==polygonPointList.size())
+                {
+                    missioncount =0;
+                    changetoAutomode();
+                }
+                //getPlat();
+            case AttributeEvent.MISSION_UPDATED:
+                break;
+
+            default:
+                // Log.i("DRONE_EVENT", event); //Uncomment to see events from the drone
+                break;
         }
-
-    }
-    //===============================================================================================================================================================
-//drawpolygon
-//manageoverlay
-    public void missionClear(){
-        mission = false;
     }
 
+    //button event list
+    public void btn_event(View v){
+        LinearLayout missiondrawlist = (LinearLayout)findViewById(R.id.missiondrawer);
+        switch(v.getId()){
+            case R.id.connect:
+                onBtnConnectTap();
+                break;
+            case R.id.arm:
+                onArmButtonTap();
+                break;
+            case R.id.land:
+                onLandButtonTap();
+                break;
+            case R.id.takeoffset:
+                takeoffsetTap();
+                break;
+            case R.id.drone_asec:
+                onAsecTap();
+                break;
+            case R.id.drone_desc:
+                onDescTap();
+                break;
+            case R.id.maplockbtn:
+
+                LinearLayout list = (LinearLayout)findViewById(R.id.maplocklayer);
+
+                onlistbtnTap(list);
+                break;
+            case R.id.mapoptionbtn:
+
+                LinearLayout list1 = (LinearLayout)findViewById(R.id.mapoptionlayer);
+                onlistbtnTap(list1);
+                break;
+            case R.id.mapcadastral:
+
+                LinearLayout list2 = (LinearLayout)findViewById(R.id.mapcadstrallayer);
+                onlistbtnTap(list2);
+                break;
+            case R.id.maplock:
+                mapfollow = true;
+                mapfollowTap();
+                break;
+            case R.id.mapmove:
+                mapfollow = false;
+                mapfollowTap();
+                break;
+            case R.id.basicmap:
+                onMapOptionTap(R.id.basicmap);
+                break;
+            case R.id.satellitemap:
+                onMapOptionTap(R.id.satellitemap);
+                break;
+            case R.id.hybridmap:
+                onMapOptionTap(R.id.hybridmap);
+                break;
+            case R.id.cadaston:
+                onCadastTap(R.id.cadaston);
+                break;
+            case R.id.cadastoff:
+                onCadastTap(R.id.cadastoff);
+                break;
+            case R.id.toggle:
+                onToggleTap();
+                break;
+            case R.id.mission:
+                missionlist = !missionlist;
+
+                if(missiondrawlist.getVisibility()==View.INVISIBLE)
+                    missiondrawlist.setVisibility(View.VISIBLE);
+                else
+                    missiondrawlist.setVisibility(View.INVISIBLE);
+                break;
+            case R.id.nomission:
+                resetMarker();
+                polygonPointList.clear();
+                dronepath.setMap(null);
+                missiondrawlist.setVisibility(View.INVISIBLE);
+                break;
+            case R.id.custom:
+                customMission();
+                missiondrawlist.setVisibility(View.INVISIBLE);
+                break;
+
+        }
+    }
+    //=============================================================================================<<Helper>>>>=====================================================================================================
     public void resetMarker(){
         manageOverlays.reset();
     }
-    //guidemode
-    public boolean mydronestate(){
-        State vehiclestate = this.drone.getAttribute(AttributeType.STATE);
-        if(vehiclestate.isFlying())
-            return true;
-        else
-            return false;
-    }
 
-    public void droneguide(LatLng latLng){
-
-        if(dronestate){
-            guide.mGuidedPoint = latLng;
-            guide.mMarkerGuide.setPosition(latLng);
-            guide.mMarkerGuide.setMap(mymap);
-            guide.DialogSimple(this.drone,new LatLong(latLng.latitude,latLng.longitude));
-        }
-
-
-
-    }
-    public void delMarker(){
-        try{
-            if(guide.CheckGoal(this.drone,guide.mGuidedPoint))
-            {
-                guide.mMarkerGuide.setMap(null);
-                VehicleApi.getApi(this.drone).setVehicleMode(VehicleMode.COPTER_LOITER, new AbstractCommandListener() {
-                    @Override
-                    public void onSuccess() {
-                        alertUser("목적지 도착");
-                    }
-
-                    @Override
-                    public void onError(int executionError) {
-
-                    }
-
-                    @Override
-                    public void onTimeout() {
-
-                    }
-                });
-
-            }
-        }catch(NullPointerException e){
-            Log.d("NONMARKER","no marker exist");
-        }
-
-    }
-    //경로선
-    public void pathline(){
-        Gps dronegps = this.drone.getAttribute(AttributeType.GPS);
-        LatLng droneposition = new LatLng(dronegps.getPosition().getLatitude(),dronegps.getPosition().getLongitude());
-        try{
-            pathcoords.add(droneposition);
-            dronepath.setCoords(pathcoords);
-
-            dronepath.setMap(mymap);
-
-            Log.d("DRONEPATH","list size:"+pathcoords.size());
-        }catch(NullPointerException e){
-            Log.d("DRONEPATH","gps position list is null");
-        }
-
-
-    }
     protected void alertUser(String message) {
         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
         Log.d(TAG, message);
@@ -719,83 +776,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
-
-    @Override
-    public void onDroneEvent(String event, Bundle extras) {
-        switch (event) {
-            case AttributeEvent.STATE_CONNECTED:
-                alertUser("Drone Connected");
-                updateConnectedButton(this.drone.isConnected());
-                updateArmButton();
-
-                checkSoloState();
-                break;
-
-            case AttributeEvent.STATE_DISCONNECTED:
-                alertUser("Drone Disconnected");
-                updateConnectedButton(this.drone.isConnected());
-                updateArmButton();
-
-                break;
-            case AttributeEvent.STATE_UPDATED:
-
-                break;
-            case AttributeEvent.STATE_ARMING:
-                updateArmButton();
-                dronestate = mydronestate();
-                break;
-            case AttributeEvent.TYPE_UPDATED:
-                Type newDroneType = this.drone.getAttribute(AttributeType.TYPE);
-                if (newDroneType.getDroneType() != this.droneType) {
-                    this.droneType = newDroneType.getDroneType();
-                    updateVehicleModesForType(this.droneType);
-                }
-                break;
-            case AttributeEvent.STATE_VEHICLE_MODE:
-                updateVehicleMode();
-
-                break;
-            case AttributeEvent.SPEED_UPDATED:
-                updateSpeed();
-                break;
-            case AttributeEvent.ALTITUDE_UPDATED:
-                updateAltitude();
-                break;
-            case AttributeEvent.GPS_POSITION:
-                updatetrack();
-                delMarker();
-                pathline();
-                break;
-            case AttributeEvent.BATTERY_UPDATED:
-                updateVolt();
-                break;
-            case AttributeEvent.ATTITUDE_UPDATED:
-                updateYaw();
-                break;
-            case AttributeEvent.GPS_COUNT:
-                updateNumberOfSatellites();
-                break;
-            case AttributeEvent.MISSION_SENT:
-                alertUser("mission upload succ");
-                break;
-            case AttributeEvent.MISSION_ITEM_REACHED:
-                getPlat();
-                missioncount++;
-                if(missioncount==polygonPointList.size())
-                {
-                    changetoAutomode();
-                }
-                //getPlat();
-            case AttributeEvent.MISSION_UPDATED:
-                break;
-
-            default:
-                // Log.i("DRONE_EVENT", event); //Uncomment to see events from the drone
-                break;
-        }
-    }
-
-
     protected void updatetrack(){
         try{
 
@@ -929,91 +909,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
-    //button event list
-    public void btn_event(View v){
-        LinearLayout missiondrawlist = (LinearLayout)findViewById(R.id.missiondrawer);
-        switch(v.getId()){
-            case R.id.connect:
-                onBtnConnectTap();
-                break;
-            case R.id.arm:
-                onArmButtonTap();
-                break;
-            case R.id.land:
-                onLandButtonTap();
-                break;
-            case R.id.takeoffset:
-                takeoffsetTap();
-                break;
-            case R.id.drone_asec:
-                onAsecTap();
-                break;
-            case R.id.drone_desc:
-                onDescTap();
-                break;
-            case R.id.maplockbtn:
-
-                LinearLayout list = (LinearLayout)findViewById(R.id.maplocklayer);
-
-                onlistbtnTap(list);
-                break;
-            case R.id.mapoptionbtn:
-
-                LinearLayout list1 = (LinearLayout)findViewById(R.id.mapoptionlayer);
-                onlistbtnTap(list1);
-                break;
-            case R.id.mapcadastral:
-
-                LinearLayout list2 = (LinearLayout)findViewById(R.id.mapcadstrallayer);
-                onlistbtnTap(list2);
-                break;
-            case R.id.maplock:
-                mapfollow = true;
-                mapfollowTap();
-                break;
-            case R.id.mapmove:
-                mapfollow = false;
-                mapfollowTap();
-                break;
-            case R.id.basicmap:
-                onMapOptionTap(R.id.basicmap);
-                break;
-            case R.id.satellitemap:
-                onMapOptionTap(R.id.satellitemap);
-                break;
-            case R.id.hybridmap:
-                onMapOptionTap(R.id.hybridmap);
-                break;
-            case R.id.cadaston:
-                onCadastTap(R.id.cadaston);
-                break;
-            case R.id.cadastoff:
-                onCadastTap(R.id.cadastoff);
-                break;
-            case R.id.toggle:
-                onToggleTap();
-                break;
-            case R.id.mission:
-                missionlist = !missionlist;
-
-                if(missiondrawlist.getVisibility()==View.INVISIBLE)
-                    missiondrawlist.setVisibility(View.VISIBLE);
-                else
-                    missiondrawlist.setVisibility(View.INVISIBLE);
-                break;
-            case R.id.nomission:
-                resetMarker();
-                polygonPointList.clear();
-                dronepath.setMap(null);
-                missiondrawlist.setVisibility(View.INVISIBLE);
-                break;
-            case R.id.custom:
-                customMission();
-                missiondrawlist.setVisibility(View.INVISIBLE);
-                break;
-
-        }
-    }
     public void onToggleTap(){
         togglebtn = !togglebtn;
         LinearLayout list1 = (LinearLayout)findViewById(R.id.maplocklayer);
@@ -1133,18 +1028,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         locationOverlay.setBearing((float) droneyaw.getYaw());
     }
 
-    protected double distanceBetweenPoints(LatLongAlt pointA, LatLongAlt pointB) {
-        if (pointA == null || pointB == null) {
-            return 0;
-        }
-        double dx = pointA.getLatitude() - pointB.getLatitude();
-        double dy = pointA.getLongitude() - pointB.getLongitude();
-        double dz = pointA.getAltitude() - pointB.getAltitude();
-        return Math.sqrt(dx * dx + dy * dy + dz * dz);
-    }
-
-
-
     @Override
     public void onLinkStateUpdated(@NonNull LinkConnectionStatus connectionStatus) {
         switch(connectionStatus.getStatusCode()){
@@ -1171,62 +1054,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         alertUser("DroneKit-Android Interrupted");
     }
 
-
-    private boolean hasPermission() {
-        return PermissionChecker.checkSelfPermission(this, PERMISSIONS[0])
-                == PermissionChecker.PERMISSION_GRANTED
-                && PermissionChecker.checkSelfPermission(this, PERMISSIONS[1])
-                == PermissionChecker.PERMISSION_GRANTED;
-    }
-
-
-    //가이드 모드
-    class GuideMode {
-        LatLng mGuidedPoint; //가이드모드 목적지 저장
-        Marker mMarkerGuide = new Marker(); //GCS 위치 표마커 옵션
-
-        void DialogSimple(final Drone drone, final LatLong point) {
-            AlertDialog.Builder alt_bld = new AlertDialog.Builder(MainActivity.this);
-            alt_bld.setMessage("확인하시면 가이드모드로 전환후 기체가 이동합니다.").setCancelable(false).setPositiveButton("확인", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-// Action for 'Yes' Button
-                    VehicleApi.getApi(drone).setVehicleMode(VehicleMode.COPTER_GUIDED,
-                            new AbstractCommandListener() {
-                                @Override
-
-                                public void onSuccess() {
-
-                                    ControlApi.getApi(drone).goTo(point, true, null);
-                                }
-                                @Override
-                                public void onError(int i) {
-
-                                }
-                                @Override
-                                public void onTimeout() {
-                                }
-                            });
-                }
-            }).setNegativeButton("취소", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    dialog.cancel();
-
-                }
-            });
-            AlertDialog alert = alt_bld.create();
-            // Title for AlertDialog
-            alert.setTitle("Title");
-            // Icon for AlertDialog
-
-            alert.show();
-        }
-        public boolean CheckGoal(final Drone drone, LatLng recentLatLng) {
-            GuidedState guidedState = drone.getAttribute(AttributeType.GUIDED_STATE);
-            LatLng target = new LatLng(guidedState.getCoordinate().getLatitude(),
-                    guidedState.getCoordinate().getLongitude());
-            return target.distanceTo(recentLatLng) <= 1;
-        }
-    }
 }
 
 
